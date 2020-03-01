@@ -17,7 +17,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class DefaultBeanFactory {
 
-    Map<String, Object> beanMap = new ConcurrentHashMap<String, Object>();
+    Map<String, Object> beanMap = new ConcurrentHashMap();
+    Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap();
 
     String baseDir = "com/sio/demo";
 
@@ -42,6 +43,7 @@ public class DefaultBeanFactory {
                         name = clazz.getSimpleName();
                     }
                     beanMap.put(lowerFirstCase(name), clazz.newInstance());
+
                 }
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
