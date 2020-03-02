@@ -1,6 +1,9 @@
 package context;
 
 import beanfactory.BeanFactory;
+import reader.BeanDefinitionReader;
+
+import java.util.List;
 
 /***
  *
@@ -12,10 +15,16 @@ import beanfactory.BeanFactory;
  */
 public abstract class AbstractApplicationContext implements ApplicationContext {
 
+
+
+
     private String id = "";
     private String applicationName = "";
 
     private final Object startupShutdownMonitor = new Object();
+
+
+
 
 
     public String getId() {
@@ -47,32 +56,17 @@ public abstract class AbstractApplicationContext implements ApplicationContext {
 
     public void refresh() {
         synchronized (this.startupShutdownMonitor) {
-            // Prepare this context for refreshing.
-//            prepareRefresh();
 
-            // Tell the subclass to refresh the internal bean factory.
+
+
+
+            //获得一个加载好的工厂
             BeanFactory beanFactory = obtainFreshBeanFactory();
 
-            // Prepare the bean factory for use in this context.
-//            prepareBeanFactory(beanFactory);
+
 
             try {
-                // Allows post-processing of the bean factory in context subclasses.
-//                postProcessBeanFactory(beanFactory);
 
-                // Invoke factory processors registered as beans in the context.
-//                invokeBeanFactoryPostProcessors(beanFactory);
-
-                // Register bean processors that intercept bean creation.
-//                registerBeanPostProcessors(beanFactory);
-
-                // Initialize message source for this context.
-//                initMessageSource();
-
-                // Initialize event multicaster for this context.
-//                initApplicationEventMulticaster();
-
-                // Initialize other special beans in specific context subclasses.
                 onRefresh();
 
                 // Check for listener beans and register them.
@@ -92,6 +86,10 @@ public abstract class AbstractApplicationContext implements ApplicationContext {
                 resetCommonCaches();
             }
         }
+    }
+
+    protected void registryBeanDefinitions(List<String> registryBeanClasses) {
+
     }
 
     protected abstract void onRefresh();

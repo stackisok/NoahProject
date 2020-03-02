@@ -1,6 +1,7 @@
 package context;
 
 import beanfactory.BeanFactory;
+import reader.BeanDefinitionReader;
 
 /***
  *
@@ -14,6 +15,7 @@ public class GenericApplicationContext extends AbstractApplicationContext {
 
     private BeanFactory beanFactory;
 
+
     public GenericApplicationContext(BeanFactory beanFactory) {
         this.beanFactory = beanFactory;
     }
@@ -25,15 +27,19 @@ public class GenericApplicationContext extends AbstractApplicationContext {
     protected void refreshBeanFactory() {
 
         //加载beanDefinition
-        loadBeanDefinition();
+        loadBeanDefinitions();
 
     }
 
-    private void loadBeanDefinition() {
-
-    }
 
     protected void onRefresh() {
+
+    }
+
+    @Override
+    public void loadBeanDefinitions() {
+        beanFactory.loadBeanDefinitions();
+
 
     }
 }

@@ -13,4 +13,6 @@ public interface BeanFactory {
     Object getBean(String beanName);
 
     <T> T getBean(Class<T> requiredType);
+
+    void loadBeanDefinitions();
 }

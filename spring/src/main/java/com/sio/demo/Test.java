@@ -2,6 +2,7 @@ package com.sio.demo;
 
 import annotation.Component;
 import beanfactory.DefaultBeanFactory;
+import reader.BeanDefinitionReader;
 
 /***
  *
@@ -22,5 +23,8 @@ public class Test {
         DefaultBeanFactory defaultBeanFactory = new DefaultBeanFactory();
         Test test = (Test) defaultBeanFactory.getBean("test");
         test.test();
+
+        BeanDefinitionReader beanDefinitionReader = new BeanDefinitionReader("application.properties");
+        System.out.println(beanDefinitionReader);
     }
 }

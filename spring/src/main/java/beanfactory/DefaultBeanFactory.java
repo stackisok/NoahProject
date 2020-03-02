@@ -1,9 +1,11 @@
 package beanfactory;
 
 import annotation.Component;
+import reader.BeanDefinitionReader;
 
 import java.io.File;
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -15,15 +17,17 @@ import java.util.concurrent.ConcurrentHashMap;
  *@Modified By:
  *
  */
-public class DefaultBeanFactory {
+public class DefaultBeanFactory implements BeanFactory {
 
+    private BeanDefinitionReader bdr;
+
+    private String [] configLocations;
     Map<String, Object> beanMap = new ConcurrentHashMap();
     Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap();
 
     String baseDir = "com/sio/demo";
 
     public DefaultBeanFactory() {
-
         //获得要扫描类的文件目录
         URL systemResource = ClassLoader.getSystemResource(baseDir);
         File file = new File(systemResource.getPath());
@@ -56,12 +60,32 @@ public class DefaultBeanFactory {
         this.beanMap = beanMap;
     }
 
+
     public Object getBean(String beanName) {
         Object instant = beanMap.get(beanName);
         if (instant == null) {
 
         }
         return instant;
+    }
+
+    @Override
+    public <T> T getBean(Class<T> requiredType) {
+        return null;
+    }
+
+    @Override
+    public void loadBeanDefinitions() {
+        //加载指定包下面的所有类
+        bdr = new BeanDefinitionReader(configLocations);
+
+        //将类注册成beanDefinition
+        registryBeanDefinitions(bdr.getRegistryBeanClasses());
+
+    }
+
+    private void registryBeanDefinitions(List<String> registryBeanClasses) {
+
     }
 
     private String lowerFirstCase(String str){

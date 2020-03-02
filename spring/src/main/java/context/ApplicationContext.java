@@ -10,7 +10,7 @@ import beanfactory.BeanFactory;
  *@Modified By:
  *
  */
-public interface ApplicationContext extends BeanFactory {
+public interface  ApplicationContext extends BeanFactory {
     String getId();
 
     String getApplicationName();
