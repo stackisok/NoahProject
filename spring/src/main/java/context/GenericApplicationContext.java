@@ -18,6 +18,8 @@ public class GenericApplicationContext extends AbstractApplicationContext {
 
     public GenericApplicationContext(BeanFactory beanFactory) {
         this.beanFactory = beanFactory;
+        refresh();
+
     }
 
     public BeanFactory getBeanFactory() {
@@ -27,19 +29,12 @@ public class GenericApplicationContext extends AbstractApplicationContext {
     protected void refreshBeanFactory() {
 
         //加载beanDefinition
-        loadBeanDefinitions();
+
 
     }
-
 
     protected void onRefresh() {
 
     }
 
-    @Override
-    public void loadBeanDefinitions() {
-        beanFactory.loadBeanDefinitions();
-
-
-    }
 }

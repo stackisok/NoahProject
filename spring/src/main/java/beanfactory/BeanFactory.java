@@ -10,9 +10,14 @@ package beanfactory;
  */
 public interface BeanFactory {
 
+
+    String SCOPE_SINGLETON = "singleton";
+
+    String SCOPE_PROTOTYPE = "prototype";
+
     Object getBean(String beanName);
 
     <T> T getBean(Class<T> requiredType);
 
-    void loadBeanDefinitions();
+
 }
