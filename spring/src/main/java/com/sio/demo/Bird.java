@@ -16,4 +16,5 @@ public class Bird implements Animal {
     public void eat() {
         System.out.println("eat");
     }
+
 }

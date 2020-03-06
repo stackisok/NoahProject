@@ -23,6 +23,9 @@ public class Test {
 
     @Autowire
     Bird bird;
+
+    @Autowire
+    Test test;
     void test() {
         System.out.println("instant");
     }
@@ -36,6 +39,14 @@ public class Test {
         Test bean = (Test)genericApplicationContext.getBean("com.sio.demo.Test");
         bean.bird.eat();
         bean.animal.eat();
+        bean.test.test();
+
+
+        A a = (A)genericApplicationContext.getBean("com.sio.demo.A");
+
+        a.say();
+        a.b.say();
+
 
 
     }
