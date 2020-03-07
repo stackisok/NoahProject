@@ -8,6 +8,8 @@ import java.io.File;
 import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Field;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,7 +28,10 @@ public class DefaultBeanFactory implements BeanFactory {
 
     private String [] configLocations = {"application.properties"};
     Map<String, Object> beanMap = new ConcurrentHashMap();
+    private volatile List<String> beanDefinitionNames = new ArrayList<>(256);
     Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap();
+
+    private final List<BeanPostProcessor> beanPostProcessors = new LinkedList<>();
 
     String baseDir = "com/sio/demo";
 
@@ -155,6 +160,52 @@ public class DefaultBeanFactory implements BeanFactory {
         return null;
     }
 
+    @Override
+    public List<String> getBeanNamesForType(Class<?> type) {
+        List<String> result = new ArrayList<>();
+
+        for (String beanDefinitionName : beanDefinitionNames) {
+
+            if (isTypeMatch(beanDefinitionName, type)) {
+                result.add(beanDefinitionName);
+            }
+
+        }
+        return result;
+    }
+
+    @Override
+    public void addBeanPostProcessor(BeanPostProcessor postProcessor) {
+        //先删除重复的
+        beanPostProcessors.remove(postProcessor);
+        //添加后置处理器
+        beanPostProcessors.add(postProcessor);
+    }
+
+    @Override
+    public Object getBean(String beanName, Class<?> requiredType) {
+
+        Object o = beanMap.get(beanName);
+        if (requiredType != null && !requiredType.isInstance(o)) {
+
+            return o;
+        }
+
+        return null;
+    }
+
+    private boolean isTypeMatch(String beanDefinitionName, Class<?> type) {
+
+        Object beanInstance = getBean(beanDefinitionName);
+
+        boolean assignableFrom = type.isAssignableFrom(beanInstance.getClass());
+        if (assignableFrom) {
+            return true;
+        }
+        return false;
+
+    }
+
     private void registryBeanDefinitions(List<String> registryBeanClasses) {
 
         registryBeanClasses.forEach(beanClass ->{
@@ -173,11 +224,14 @@ public class DefaultBeanFactory implements BeanFactory {
                     beanDefinition.setLazyInit(false);
                     beanDefinition.setScope(BeanFactory.SCOPE_SINGLETON);
                     beanDefinitionMap.put(name, beanDefinition);
+                    beanDefinitionNames.add(name);
 
                     Class<?>[] interfaces = clazz.getInterfaces();
                     for (Class<?> i : interfaces) {
                         String simpleName = i.getName();
                         beanDefinitionMap.put(simpleName, beanDefinition);
+                        beanDefinitionNames.add(simpleName);
+
                     }
 
                 } else {

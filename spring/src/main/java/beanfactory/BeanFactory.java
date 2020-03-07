@@ -1,5 +1,7 @@
 package beanfactory;
 
+import java.util.List;
+
 /***
  *
  *@Author ChenjunWang
@@ -19,5 +21,10 @@ public interface BeanFactory {
 
     <T> T getBean(Class<T> requiredType);
 
+    List<String> getBeanNamesForType(Class<?> type);
+
+    void addBeanPostProcessor(BeanPostProcessor postProcessor);
+
+    Object getBean(String beanName, Class<?> requiredType);
 
 }

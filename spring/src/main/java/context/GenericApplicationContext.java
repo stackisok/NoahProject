@@ -1,7 +1,10 @@
 package context;
 
 import beanfactory.BeanFactory;
+import beanfactory.BeanPostProcessor;
 import reader.BeanDefinitionReader;
+
+import java.util.List;
 
 /***
  *
@@ -37,4 +40,18 @@ public class GenericApplicationContext extends AbstractApplicationContext {
 
     }
 
+    @Override
+    public List<String> getBeanNamesForType(Class<?> type) {
+        return beanFactory.getBeanNamesForType(type);
+    }
+
+    @Override
+    public void addBeanPostProcessor(BeanPostProcessor postProcessor) {
+        beanFactory.addBeanPostProcessor(postProcessor);
+    }
+
+    @Override
+    public Object getBean(String beanName, Class<?> requiredType) {
+        return beanFactory.getBean(beanName, requiredType);
+    }
 }
