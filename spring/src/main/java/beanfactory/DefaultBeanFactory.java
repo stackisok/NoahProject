@@ -38,12 +38,15 @@ public class DefaultBeanFactory implements BeanFactory {
     public DefaultBeanFactory() {
 
 
-
         //加载指定包下面的所有类
         bdr = new BeanDefinitionReader(configLocations);
 
         //将类注册成beanDefinition
         registryBeanDefinitions(bdr.getRegistryBeanClasses());
+
+
+        //初始化postProcessor
+        PostProcessorRegistrationDelegate.registerBeanPostProcessors(this);
 
         //初始化所有的类
 
@@ -84,28 +87,14 @@ public class DefaultBeanFactory implements BeanFactory {
     }
 
     private void initBeans() {
+        //实例化
         for (Map.Entry<String, BeanDefinition> beanDefinitionEntry : beanDefinitionMap.entrySet()) {
 
-            String beanName = beanDefinitionEntry.getKey();
-            BeanDefinition value = beanDefinitionEntry.getValue();
-            String beanClassName = value.getBeanClassName();
-            try {
-                Class<?> clazz = Class.forName(beanClassName);
-                Object instance = beanMap.get(beanClassName);
-                if (instance == null) {
-                    instance = clazz.newInstance();
-                }
-                beanMap.put(beanName, instance);
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (InstantiationException e) {
-                e.printStackTrace();
-            }
+            doGetBean(beanDefinitionEntry.getKey());
         }
 
 
+        //初始化
         for (Map.Entry<String, Object> bean : beanMap.entrySet()) {
             String beanName = bean.getKey();
             Object value = bean.getValue();
@@ -143,15 +132,35 @@ public class DefaultBeanFactory implements BeanFactory {
 
     }
 
-    private void doGetBean(String beanName) {
+    private Object doGetBean(String beanName) {
+
+        Object o = beanMap.get(beanName);
+        if (o != null) return o;
+        BeanDefinition value = beanDefinitionMap.get(beanName);
+        String beanClassName = value.getBeanClassName();
+        try {
+            Class<?> clazz = Class.forName(beanClassName);
+            Object instance = beanMap.get(beanClassName);
+            if (instance == null) {
+                instance = clazz.newInstance();
+            }
+            beanMap.put(beanName, instance);
+            return instance;
+
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 
     public Object getBean(String beanName) {
-        Object instant = beanMap.get(beanName);
-        if (instant == null) {
+        Object instant = doGetBean(beanName);
 
-        }
         return instant;
     }
 

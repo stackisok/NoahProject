@@ -23,7 +23,9 @@ final class PostProcessorRegistrationDelegate {
 
         for (String ppName : postProcessorNames) {
             BeanPostProcessor bean = (BeanPostProcessor)beanFactory.getBean(ppName, BeanPostProcessor.class);
-            postProcessors.add(bean);
+            if (bean != null) {
+                postProcessors.add(bean);
+            }
 
         }
         registerBeanPostProcessors(beanFactory, postProcessors);
