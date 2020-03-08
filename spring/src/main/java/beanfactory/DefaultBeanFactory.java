@@ -141,10 +141,22 @@ public class DefaultBeanFactory implements BeanFactory {
         try {
             Class<?> clazz = Class.forName(beanClassName);
             Object instance = beanMap.get(beanClassName);
+
+            for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
+                if (beanPostProcessor instanceof InstantiationAwareBeanPostProcessor) {
+                    ((InstantiationAwareBeanPostProcessor) beanPostProcessor).postProcessBeforeInstantiation(instance.getClass(), beanName);
+                }
+            }
             if (instance == null) {
                 instance = clazz.newInstance();
             }
             beanMap.put(beanName, instance);
+
+            for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
+                if (beanPostProcessor instanceof InstantiationAwareBeanPostProcessor) {
+                    ((InstantiationAwareBeanPostProcessor) beanPostProcessor).postProcessAfterInstantiation(instance, beanName);
+                }
+            }
             return instance;
 
         } catch (ClassNotFoundException e) {
