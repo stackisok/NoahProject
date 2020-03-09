@@ -4,10 +4,7 @@ import annotation.Autowire;
 import annotation.Component;
 import reader.BeanDefinitionReader;
 
-import java.io.File;
-import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Field;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -90,11 +87,17 @@ public class DefaultBeanFactory implements BeanFactory {
         //实例化
         for (Map.Entry<String, BeanDefinition> beanDefinitionEntry : beanDefinitionMap.entrySet()) {
 
-            doGetBean(beanDefinitionEntry.getKey());
+            doGetBean(beanDefinitionEntry.getKey(), null);
         }
 
 
         //初始化
+        populateBean();
+
+
+    }
+
+    private void populateBean() {
         for (Map.Entry<String, Object> bean : beanMap.entrySet()) {
             String beanName = bean.getKey();
             Object value = bean.getValue();
@@ -125,17 +128,20 @@ public class DefaultBeanFactory implements BeanFactory {
 
         }
 
-
     }
 
-    private void populateBean() {
-
-    }
-
-    private Object doGetBean(String beanName) {
+    private Object doGetBean(String beanName, Class<?> requiredType) {
 
         Object o = beanMap.get(beanName);
-        if (o != null) return o;
+        if (o != null) {
+            if (requiredType == null) {
+                return o;
+            }
+            if (requiredType.isInstance(o)) {//对象能不能转化成这个类
+                return o;
+            }
+            return null;
+        }
         BeanDefinition value = beanDefinitionMap.get(beanName);
         String beanClassName = value.getBeanClassName();
         try {
@@ -144,7 +150,7 @@ public class DefaultBeanFactory implements BeanFactory {
 
             for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
                 if (beanPostProcessor instanceof InstantiationAwareBeanPostProcessor) {
-                    ((InstantiationAwareBeanPostProcessor) beanPostProcessor).postProcessBeforeInstantiation(instance.getClass(), beanName);
+                    ((InstantiationAwareBeanPostProcessor) beanPostProcessor).postProcessBeforeInstantiation(clazz, beanName);
                 }
             }
             if (instance == null) {
@@ -171,7 +177,7 @@ public class DefaultBeanFactory implements BeanFactory {
 
 
     public Object getBean(String beanName) {
-        Object instant = doGetBean(beanName);
+        Object instant = doGetBean(beanName, null);
 
         return instant;
     }
@@ -206,8 +212,10 @@ public class DefaultBeanFactory implements BeanFactory {
     @Override
     public Object getBean(String beanName, Class<?> requiredType) {
 
+
+        doGetBean(beanName, requiredType);
         Object o = beanMap.get(beanName);
-        if (requiredType != null && !requiredType.isInstance(o)) {
+        if (requiredType != null && requiredType.isInstance(o)) {
 
             return o;
         }
@@ -217,9 +225,15 @@ public class DefaultBeanFactory implements BeanFactory {
 
     private boolean isTypeMatch(String beanDefinitionName, Class<?> type) {
 
-        Object beanInstance = getBean(beanDefinitionName);
+//        Object beanInstance = getBean(beanDefinitionName);
+        boolean assignableFrom = false;
+        try {
+            Class<?> clazz = Class.forName(beanDefinitionName);
+            assignableFrom = type.isAssignableFrom(clazz);
 
-        boolean assignableFrom = type.isAssignableFrom(beanInstance.getClass());
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
         if (assignableFrom) {
             return true;
         }

@@ -16,11 +16,14 @@ public class PostProcessorTest implements InstantiationAwareBeanPostProcessor {
 
     @Override
     public Object postProcessBeforeInstantiation(Class<?> beanClass, String beanName) {
+        System.out.println("postProcessBeforeInstantiation");
         return null;
     }
 
     @Override
     public boolean postProcessAfterInstantiation(Object bean, String beanName) {
+        System.out.println("postProcessAfterInstantiation");
+
         return false;
     }
 
