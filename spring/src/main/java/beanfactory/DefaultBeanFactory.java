@@ -23,7 +23,7 @@ public class DefaultBeanFactory implements BeanFactory {
 
     private BeanDefinitionReader bdr;
 
-    private String [] configLocations = {"application.properties"};
+    private String[] configLocations = {"application.properties"};
     Map<String, Object> beanMap = new ConcurrentHashMap();
     private volatile List<String> beanDefinitionNames = new ArrayList<>(256);
     Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap();
@@ -84,49 +84,55 @@ public class DefaultBeanFactory implements BeanFactory {
     }
 
     private void initBeans() {
-        //实例化
         for (Map.Entry<String, BeanDefinition> beanDefinitionEntry : beanDefinitionMap.entrySet()) {
 
+            //实例化
             doGetBean(beanDefinitionEntry.getKey(), null);
+            //初始化
+            populateBean(beanDefinitionEntry.getKey());
         }
-
-
-        //初始化
-        populateBean();
 
 
     }
 
-    private void populateBean() {
-        for (Map.Entry<String, Object> bean : beanMap.entrySet()) {
-            String beanName = bean.getKey();
-            Object value = bean.getValue();
+    private void populateBean(String beanName) {
 
-            Field[] fields = value.getClass().getDeclaredFields();
+        Object value = beanMap.get(beanName);
 
-            for (Field field : fields) {
-                boolean present = field.isAnnotationPresent(Autowire.class);
-                if (present) {
-                    Autowire autowire = field.getAnnotation(Autowire.class);
+        for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
+            if (beanPostProcessor instanceof BeanPostProcessor) {
+                ((BeanPostProcessor) beanPostProcessor).postProcessBeforeInitialization(value, beanName);
+            }
+        }
+        Field[] fields = value.getClass().getDeclaredFields();
 
-                    //要注入的类型
-                    Class<?> clazz = field.getType();
-                    String name = clazz.getName();
-                    Object o = beanMap.get(name);
-                    try {
-                        field.setAccessible(true);
-                        field.set(value, o);
-                    } catch (IllegalAccessException e) {
-                        e.printStackTrace();
-                    }
+        for (Field field : fields) {
+            boolean present = field.isAnnotationPresent(Autowire.class);
+            if (present) {
+                Autowire autowire = field.getAnnotation(Autowire.class);
 
-
+                //要注入的类型
+                Class<?> clazz = field.getType();
+                String name = clazz.getName();
+                Object o = beanMap.get(name);
+                try {
+                    field.setAccessible(true);
+                    field.set(value, o);
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
                 }
+
 
             }
 
-
         }
+
+        for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
+            if (beanPostProcessor instanceof BeanPostProcessor) {
+                ((BeanPostProcessor) beanPostProcessor).postProcessAfterInitialization(value, beanName);
+            }
+        }
+
 
     }
 
@@ -243,7 +249,7 @@ public class DefaultBeanFactory implements BeanFactory {
 
     private void registryBeanDefinitions(List<String> registryBeanClasses) {
 
-        registryBeanClasses.forEach(beanClass ->{
+        registryBeanClasses.forEach(beanClass -> {
             try {
                 Class<?> clazz = Class.forName(beanClass);
                 if (clazz.isAnnotationPresent(Component.class)) {
@@ -280,8 +286,8 @@ public class DefaultBeanFactory implements BeanFactory {
 
     }
 
-    private String lowerFirstCase(String str){
-        char [] chars = str.toCharArray();
+    private String lowerFirstCase(String str) {
+        char[] chars = str.toCharArray();
         chars[0] += 32;
         return String.valueOf(chars);
     }
