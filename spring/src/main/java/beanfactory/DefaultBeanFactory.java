@@ -86,30 +86,35 @@ public class DefaultBeanFactory implements BeanFactory {
     private void initBeans() {
         for (Map.Entry<String, BeanDefinition> beanDefinitionEntry : beanDefinitionMap.entrySet()) {
 
+            String beanName = beanDefinitionEntry.getKey();
+            Object instant = beanMap.get(beanName);
+            if (instant != null) {
+                continue;
+            }
             //实例化
-            doGetBean(beanDefinitionEntry.getKey(), null);
+            doGetBean(beanName, null);
             //初始化
-            populateBean(beanDefinitionEntry.getKey());
+            populateBean(beanName, beanDefinitionEntry.getValue());
         }
 
 
     }
 
-    private void populateBean(String beanName) {
+    private void populateBean(String beanName, BeanDefinition bd) {
 
 
-
+        String beanClassName = bd.getBeanClassName();
         Object instance = beanMap.get(beanName);
 
         for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
             if (beanPostProcessor instanceof InstantiationAwareBeanPostProcessor) {
-                ((InstantiationAwareBeanPostProcessor) beanPostProcessor).postProcessAfterInstantiation(instance, beanName);
+                ((InstantiationAwareBeanPostProcessor) beanPostProcessor).postProcessAfterInstantiation(instance, beanClassName);
             }
         }
 
         Object wrappedBean = instance;
 
-        wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);
+        wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanClassName);
 
 
         Field[] fields = instance.getClass().getDeclaredFields();
@@ -133,7 +138,7 @@ public class DefaultBeanFactory implements BeanFactory {
 
         }
 
-        wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
+        wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanClassName);
         beanMap.put(beanName,wrappedBean);
 
 
@@ -169,7 +174,7 @@ public class DefaultBeanFactory implements BeanFactory {
             Class<?> clazz = Class.forName(beanClassName);
             Object instance = beanMap.get(beanClassName);
 
-            Object bean = resolveBeforeInstantiation(beanName, value);
+            Object bean = resolveBeforeInstantiation(beanClassName, value);
             if (bean != null) {
                 beanMap.put(beanName, instance);
                 return bean;
@@ -323,9 +328,9 @@ public class DefaultBeanFactory implements BeanFactory {
 
                     Class<?>[] interfaces = clazz.getInterfaces();
                     for (Class<?> i : interfaces) {
-                        String simpleName = i.getName();
-                        beanDefinitionMap.put(simpleName, beanDefinition);
-                        beanDefinitionNames.add(simpleName);
+                        String fullName = i.getName();
+                        beanDefinitionMap.put(fullName, beanDefinition);
+                        beanDefinitionNames.add(fullName);
 
                     }
 
