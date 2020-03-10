@@ -97,43 +97,58 @@ public class DefaultBeanFactory implements BeanFactory {
 
     private void populateBean(String beanName) {
 
-        Object value = beanMap.get(beanName);
+
+
+        Object instance = beanMap.get(beanName);
 
         for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
-            if (beanPostProcessor instanceof BeanPostProcessor) {
-                ((BeanPostProcessor) beanPostProcessor).postProcessBeforeInitialization(value, beanName);
+            if (beanPostProcessor instanceof InstantiationAwareBeanPostProcessor) {
+                ((InstantiationAwareBeanPostProcessor) beanPostProcessor).postProcessAfterInstantiation(instance, beanName);
             }
         }
-        Field[] fields = value.getClass().getDeclaredFields();
+
+        Object wrappedBean = instance;
+
+        wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);
+
+
+        Field[] fields = instance.getClass().getDeclaredFields();
 
         for (Field field : fields) {
             boolean present = field.isAnnotationPresent(Autowire.class);
             if (present) {
                 Autowire autowire = field.getAnnotation(Autowire.class);
-
                 //要注入的类型
                 Class<?> clazz = field.getType();
                 String name = clazz.getName();
                 Object o = beanMap.get(name);
                 try {
                     field.setAccessible(true);
-                    field.set(value, o);
+                    field.set(instance, o);
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 }
 
-
             }
 
         }
 
-        for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
-            if (beanPostProcessor instanceof BeanPostProcessor) {
-                ((BeanPostProcessor) beanPostProcessor).postProcessAfterInitialization(value, beanName);
+        wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
+        beanMap.put(beanName,wrappedBean);
+
+
+    }
+
+    private Object applyBeanPostProcessorsBeforeInitialization(Object existingBean, String beanName) {
+        Object result = existingBean;
+        for (BeanPostProcessor processor : beanPostProcessors) {
+            Object current = processor.postProcessBeforeInitialization(result, beanName);
+            if (current == null) {
+                return result;
             }
+            result = current;
         }
-
-
+        return result;
     }
 
     private Object doGetBean(String beanName, Class<?> requiredType) {
@@ -154,21 +169,18 @@ public class DefaultBeanFactory implements BeanFactory {
             Class<?> clazz = Class.forName(beanClassName);
             Object instance = beanMap.get(beanClassName);
 
-            for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
-                if (beanPostProcessor instanceof InstantiationAwareBeanPostProcessor) {
-                    ((InstantiationAwareBeanPostProcessor) beanPostProcessor).postProcessBeforeInstantiation(clazz, beanName);
-                }
+            Object bean = resolveBeforeInstantiation(beanName, value);
+            if (bean != null) {
+                beanMap.put(beanName, instance);
+                return bean;
             }
+
             if (instance == null) {
                 instance = clazz.newInstance();
             }
             beanMap.put(beanName, instance);
 
-            for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
-                if (beanPostProcessor instanceof InstantiationAwareBeanPostProcessor) {
-                    ((InstantiationAwareBeanPostProcessor) beanPostProcessor).postProcessAfterInstantiation(instance, beanName);
-                }
-            }
+
             return instance;
 
         } catch (ClassNotFoundException e) {
@@ -177,6 +189,48 @@ public class DefaultBeanFactory implements BeanFactory {
             e.printStackTrace();
         } catch (InstantiationException e) {
             e.printStackTrace();
+        }
+        return null;
+    }
+
+    private Object resolveBeforeInstantiation(String beanName, BeanDefinition beanDefinition) throws ClassNotFoundException {
+        Object bean = null;
+
+        String beanClassName = beanDefinition.getBeanClassName();
+
+        Class<?> targetType = Class.forName(beanClassName);
+        if (targetType != null) {
+            bean = applyBeanPostProcessorsBeforeInstantiation(targetType, beanName);
+            if (bean != null) {
+                bean = applyBeanPostProcessorsAfterInitialization(bean, beanName);
+            }
+        }
+        return bean;
+
+
+    }
+
+    private Object applyBeanPostProcessorsAfterInitialization(Object existingBean, String beanName) {
+        Object result = existingBean;
+        for (BeanPostProcessor processor : beanPostProcessors) {
+            Object current = processor.postProcessAfterInitialization(result, beanName);
+            if (current == null) {
+                return result;
+            }
+            result = current;
+        }
+        return result;
+    }
+
+    private Object applyBeanPostProcessorsBeforeInstantiation(Class<?> beanClass, String beanName) {
+        for (BeanPostProcessor bp : beanPostProcessors) {
+            if (bp instanceof InstantiationAwareBeanPostProcessor) {
+                InstantiationAwareBeanPostProcessor ibp = (InstantiationAwareBeanPostProcessor) bp;
+                Object result = ibp.postProcessBeforeInstantiation(beanClass, beanName);
+                if (result != null) {
+                    return result;
+                }
+            }
         }
         return null;
     }
